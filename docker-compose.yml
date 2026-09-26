@@ -1,0 +1,78 @@
+# BookIt Platform — Local Infrastructure
+# ─────────────────────────────────────────────────────────────────
+# Start:   docker compose --env-file .env.local up -d
+# Stop:    docker compose down
+# Logs:    docker compose logs -f [service-name]
+# Reset:   docker compose down -v  (WARNING: deletes all data)
+# ─────────────────────────────────────────────────────────────────
+
+services:
+
+  # ── PostgreSQL 16 ───────────────────────────────────────────────
+  # The authoritative data store — all business state lives here.
+  postgres:
+    image: postgres:16-alpine
+    container_name: bookit-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: bookit
+      POSTGRES_USER: bookit_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"           # host:container — your app connects on localhost:5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bookit_user -d bookit"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Redis 7 ─────────────────────────────────────────────────────
+  # Cache and rate-limiting store.
+  redis:
+    image: redis:7-alpine
+    container_name: bookit-redis
+    restart: unless-stopped
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Kafka (Official Apache Kafka KRaft — no ZooKeeper) ───────────
+  # Event streaming. KRaft = Kafka manages its own metadata,
+  # no separate ZooKeeper process needed.
+  kafka:
+    image: apache/kafka:latest
+    container_name: bookit-kafka
+    restart: unless-stopped
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    ports:
+      - "9092:9092"
+    volumes:
+      - kafka_data:/tmp/kraft-combined-logs
+
+# ── Named volumes ────────────────────────────────────────────────
+# Docker manages these. Data persists across container restarts.
+# Run 'docker compose down -v' to delete all data and start fresh.
+volumes:
+  postgres_data:
+  redis_data:
+  kafka_data:

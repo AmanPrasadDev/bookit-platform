@@ -1,0 +1,57 @@
+spring:
+  application:
+    name: bookit-platform
+
+  # ── JPA / Hibernate ──────────────────────────────────────────────
+  jpa:
+    hibernate:
+      ddl-auto: validate        # Never auto-create tables; Flyway owns the schema
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: false
+    show-sql: false
+    open-in-view: false         # Prevents lazy-loading issues in web layer
+
+  # ── Flyway ───────────────────────────────────────────────────────
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: false
+
+  # ── Security (base — will be expanded in M1) ─────────────────────
+  security:
+    user:
+      name: disable             # Disables Spring's default login page for now
+
+  # ── Lifecycle ────────────────────────────────────────────────────
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+
+# ── Server ─────────────────────────────────────────────────────────
+server:
+  port: 8080
+  shutdown: graceful            # Wait for in-flight requests before stopping
+
+# ── Actuator (health, metrics endpoints) ───────────────────────────
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true           # /actuator/health/liveness and /readiness
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+
+# ── Logging ────────────────────────────────────────────────────────
+logging:
+  level:
+    root: INFO
+    com.bookit: INFO
