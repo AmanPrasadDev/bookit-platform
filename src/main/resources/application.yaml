@@ -59,7 +59,7 @@ logging:
 # ── Security & JWT Configuration ──────────────────────────────────
 security:
   jwt:
-    secret: ${JWT_SECRET:bookit-super-secret-development-key-that-is-at-least-256-bits-long-32-bytes!}
+    secret: ${JWT_SECRET}
     issuer: bookit-platform
     access-token-expiration-minutes: 30
     refresh-token-expiration-days: 30

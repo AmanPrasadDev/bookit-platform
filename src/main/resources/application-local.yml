@@ -32,3 +32,8 @@ logging:
     com.bookit: DEBUG
     org.springframework.security: DEBUG
     org.flywaydb: DEBUG
+    
+# ── Local JWT Secret for Integration Tests ─────────────────────────
+security:
+  jwt:
+    secret: bookit-super-secret-development-key-that-is-at-least-256-bits-long-32-bytes!

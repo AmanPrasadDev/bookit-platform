@@ -53,6 +53,7 @@ jobs:
         env:
           POSTGRES_PASSWORD: bookit_local_pass
           REDIS_PASSWORD: redis_local_pass
+          JWT_SECRET: bookit-super-secret-development-key-that-is-at-least-256-bits-long-32-bytes!
 
       - name: Upload test reports
         if: always()
