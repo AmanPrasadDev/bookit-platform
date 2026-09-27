@@ -3,6 +3,8 @@ package com.bookit.identity.domain;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -43,6 +45,7 @@ public class SecurityAuditEvent {
     /**
      * Optional JSON string for event-specific details (e.g. failure reason, attempt counts).
      */
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "metadata", columnDefinition = "jsonb")
     private String metadata;
 
