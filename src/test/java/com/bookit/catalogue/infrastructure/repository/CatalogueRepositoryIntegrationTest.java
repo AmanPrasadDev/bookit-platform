@@ -127,7 +127,7 @@ class CatalogueRepositoryIntegrationTest {
     void shouldFindLatestPublishedSeatMapVersion() {
         Screen screen = createStandardDelhiScreen();
 
-        SeatMapVersion v1Draft = seatMapVersionRepository.save(SeatMapVersion.builder()
+        seatMapVersionRepository.save(SeatMapVersion.builder()
                 .id(UUID.randomUUID())
                 .screenId(screen.getId())
                 .versionNumber(1)
@@ -143,6 +143,7 @@ class CatalogueRepositoryIntegrationTest {
                 .totalSeats(200)
                 .build());
 
+        // Query latest published version
         Optional<SeatMapVersion> latestPublished = seatMapVersionRepository
                 .findFirstByScreenIdAndStatusOrderByVersionNumberDesc(screen.getId(), SeatMapStatus.PUBLISHED);
 
@@ -151,6 +152,7 @@ class CatalogueRepositoryIntegrationTest {
         assertThat(latestPublished.get().getVersionNumber()).isEqualTo(2);
         assertThat(latestPublished.get().getTotalSeats()).isEqualTo(200);
 
+        // Query by exact screen and version number
         Optional<SeatMapVersion> exactV1 = seatMapVersionRepository.findByScreenIdAndVersionNumber(screen.getId(), 1);
         assertThat(exactV1).isPresent();
         assertThat(exactV1.get().getStatus()).isEqualTo(SeatMapStatus.DRAFT);
@@ -169,7 +171,7 @@ class CatalogueRepositoryIntegrationTest {
                 .totalSeats(120)
                 .build());
 
-        // Save sections intentionally out of order
+        // Save sections out of order
         seatSectionRepository.save(SeatSection.builder()
                 .id(UUID.randomUUID())
                 .seatMapVersionId(version.getId())
@@ -385,5 +387,217 @@ class CatalogueRepositoryIntegrationTest {
         assertThat(persisted.getLanguages()).containsExactlyInAnyOrder("HINDI", "TAMIL", "TELUGU");
         assertThat(persisted.getGenres()).containsExactlyInAnyOrder("ACTION", "THRILLER");
         assertThat(persisted.getSupportedFormatIds()).containsExactly(imax.getId());
+    }
+
+    @Test
+    @DisplayName("Should return Optional.empty when querying non-existent entities")
+    void shouldReturnEmptyOptionalWhenQueryingNonExistentEntities() {
+        Screen screen = createStandardDelhiScreen();
+
+        // 1. Non-existent city
+        assertThat(cityRepository.findByNameIgnoreCase("Atlantis")).isEmpty();
+
+        // 2. Non-existent organization
+        assertThat(organizationRepository.findByLegalName("NonExistent Org")).isEmpty();
+
+        // 3. Non-existent cinema
+        assertThat(cinemaRepository.findByOrganizationIdAndName(UUID.randomUUID(), "Ghost Cinema")).isEmpty();
+
+        // 4. Non-existent screen
+        assertThat(screenRepository.findByCinemaIdAndName(screen.getCinemaId(), "Audi 999")).isEmpty();
+
+        // 5. Non-existent seat map version
+        assertThat(seatMapVersionRepository.findByScreenIdAndVersionNumber(screen.getId(), 999)).isEmpty();
+
+        // 6. Non-existent published layout (when screen only has DRAFT)
+        seatMapVersionRepository.save(SeatMapVersion.builder()
+                .id(UUID.randomUUID())
+                .screenId(screen.getId())
+                .versionNumber(1)
+                .status(SeatMapStatus.DRAFT)
+                .totalSeats(50)
+                .build());
+
+        assertThat(seatMapVersionRepository.findFirstByScreenIdAndStatusOrderByVersionNumberDesc(
+                screen.getId(), SeatMapStatus.PUBLISHED)).isEmpty();
+
+        // 7. Non-existent format
+        assertThat(movieFormatRepository.findByCode("NON_EXISTENT_FORMAT")).isEmpty();
+
+        // 8. Non-existent movie title
+        assertThat(movieRepository.findByTitleIgnoreCase("Ghost Movie Not In Catalog")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Should filter out inactive records and isolate data across venues")
+    void shouldFilterOutInactiveAndIsolateDataAcrossVenues() {
+        City delhi = cityRepository.save(City.builder()
+                .id(UUID.randomUUID())
+                .name("Delhi")
+                .state("Delhi")
+                .countryCode("IND")
+                .build());
+
+        OperatorOrganization pvr = organizationRepository.save(OperatorOrganization.builder()
+                .id(UUID.randomUUID())
+                .legalName("PVR INOX Limited")
+                .displayName("PVR INOX")
+                .contactEmail("contact@pvr.com")
+                .build());
+
+        // Cinema 1: ACTIVE (Saket)
+        Cinema saket = cinemaRepository.save(Cinema.builder()
+                .id(UUID.randomUUID())
+                .organizationId(pvr.getId())
+                .cityId(delhi.getId())
+                .name("PVR Select Citywalk Saket")
+                .address("Saket, New Delhi")
+                .status("ACTIVE")
+                .build());
+
+        // Cinema 2: INACTIVE (Priya - temporarily closed for renovation)
+        Cinema priya = cinemaRepository.save(Cinema.builder()
+                .id(UUID.randomUUID())
+                .organizationId(pvr.getId())
+                .cityId(delhi.getId())
+                .name("PVR Priya Vasant Vihar")
+                .address("Vasant Vihar, New Delhi")
+                .status("INACTIVE")
+                .build());
+
+        // Screen 1 in Saket, Screen 2 in Priya
+        Screen saketAudi1 = screenRepository.save(Screen.builder()
+                .id(UUID.randomUUID())
+                .cinemaId(saket.getId())
+                .name("Audi 1")
+                .build());
+
+        Screen priyaAudi1 = screenRepository.save(Screen.builder()
+                .id(UUID.randomUUID())
+                .cinemaId(priya.getId())
+                .name("Audi 1")
+                .build());
+
+        // Assert status filtering: only ACTIVE cinemas in Delhi returned
+        List<Cinema> activeDelhiCinemas = cinemaRepository.findAllByCityIdAndStatus(delhi.getId(), "ACTIVE");
+        assertThat(activeDelhiCinemas)
+                .extracting(Cinema::getId)
+                .contains(saket.getId())
+                .doesNotContain(priya.getId());
+
+        // Assert venue isolation: screens of Saket should NOT include screens of Priya
+        List<Screen> saketScreens = screenRepository.findAllByCinemaId(saket.getId());
+        assertThat(saketScreens)
+                .extracting(Screen::getId)
+                .contains(saketAudi1.getId())
+                .doesNotContain(priyaAudi1.getId());
+
+        // Movie format status filtering
+        MovieFormat activeFormat = movieFormatRepository.save(MovieFormat.builder()
+                .id(UUID.randomUUID())
+                .code("IMAX_LASER")
+                .displayName("IMAX with Laser")
+                .status("ACTIVE")
+                .build());
+
+        MovieFormat inactiveFormat = movieFormatRepository.save(MovieFormat.builder()
+                .id(UUID.randomUUID())
+                .code("ANALOG_35MM")
+                .displayName("Analog 35mm")
+                .status("INACTIVE")
+                .build());
+
+        List<MovieFormat> activeFormats = movieFormatRepository.findAllByStatus("ACTIVE");
+        assertThat(activeFormats)
+                .extracting(MovieFormat::getCode)
+                .contains(activeFormat.getCode())
+                .doesNotContain(inactiveFormat.getCode());
+
+        // Movie status segregation
+        Movie releasedMovie = movieRepository.save(Movie.builder()
+                .id(UUID.randomUUID())
+                .title("Stree 2")
+                .runtimeMinutes(147)
+                .releaseDate(LocalDate.of(2024, 8, 15))
+                .status(MovieStatus.RELEASED)
+                .build());
+
+        Movie upcomingMovie = movieRepository.save(Movie.builder()
+                .id(UUID.randomUUID())
+                .title("War 2")
+                .runtimeMinutes(160)
+                .releaseDate(LocalDate.of(2025, 8, 14))
+                .status(MovieStatus.UPCOMING)
+                .build());
+
+        List<Movie> released = movieRepository.findAllByStatus(MovieStatus.RELEASED);
+        assertThat(released)
+                .extracting(Movie::getTitle)
+                .contains(releasedMovie.getTitle())
+                .doesNotContain(upcomingMovie.getTitle());
+
+        List<Movie> upcoming = movieRepository.findAllByStatus(MovieStatus.UPCOMING);
+        assertThat(upcoming)
+                .extracting(Movie::getTitle)
+                .contains(upcomingMovie.getTitle())
+                .doesNotContain(releasedMovie.getTitle());
+    }
+
+    @Test
+    @DisplayName("Should return zero count and empty list for a layout with no physical seats")
+    void shouldReturnZeroCountAndEmptyListForLayoutWithNoSeats() {
+        Screen screen = createStandardDelhiScreen();
+
+        SeatMapVersion emptyVersion = seatMapVersionRepository.save(SeatMapVersion.builder()
+                .id(UUID.randomUUID())
+                .screenId(screen.getId())
+                .versionNumber(1)
+                .status(SeatMapStatus.DRAFT)
+                .totalSeats(0)
+                .build());
+
+        List<PhysicalSeat> seats = physicalSeatRepository
+                .findAllBySeatMapVersionIdOrderByRowLabelAscSeatNumberAsc(emptyVersion.getId());
+        assertThat(seats).isEmpty();
+
+        long count = physicalSeatRepository.countBySeatMapVersionId(emptyVersion.getId());
+        assertThat(count).isEqualTo(0L);
+    }
+
+    @Test
+    @DisplayName("Should reject duplicate screen name in same cinema with DataIntegrityViolationException")
+    void shouldRejectDuplicateScreenNameInSameCinema() {
+        Screen screen1 = createStandardDelhiScreen();
+
+        // Attempt to create another screen with the same name in the same cinema
+        Screen duplicateScreen = Screen.builder()
+                .id(UUID.randomUUID())
+                .cinemaId(screen1.getCinemaId())
+                .name(screen1.getName()) // Duplicate (cinema_id, name)
+                .build();
+
+        assertThatThrownBy(() -> screenRepository.saveAndFlush(duplicateScreen))
+                .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test
+    @DisplayName("Should reject duplicate city name and state with DataIntegrityViolationException")
+    void shouldRejectDuplicateCityNameAndState() {
+        cityRepository.saveAndFlush(City.builder()
+                .id(UUID.randomUUID())
+                .name("New Delhi")
+                .state("Delhi")
+                .countryCode("IND")
+                .build());
+
+        City duplicateCity = City.builder()
+                .id(UUID.randomUUID())
+                .name("New Delhi")
+                .state("Delhi") // Duplicate (name, state)
+                .countryCode("IND")
+                .build();
+
+        assertThatThrownBy(() -> cityRepository.saveAndFlush(duplicateCity))
+                .isInstanceOf(DataIntegrityViolationException.class);
     }
 }
