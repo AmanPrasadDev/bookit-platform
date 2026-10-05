@@ -35,6 +35,7 @@ public class VenueManagementService {
     private final SeatMapVersionRepository seatMapVersionRepository;
     private final SeatSectionRepository seatSectionRepository;
     private final PhysicalSeatRepository physicalSeatRepository;
+    private final SeatMapAssembler seatMapAssembler;
 
     /**
      * Create a new Cinema under an organization and city.
@@ -177,27 +178,7 @@ public class VenueManagementService {
         }
         seatMapVersion.setStatus(SeatMapStatus.PUBLISHED);
         seatMapVersion.setPublishedAt(Instant.now());
-        seatMapVersionRepository.save(seatMapVersion);
-        List<SeatSection> sections = seatSectionRepository
-                .findAllBySeatMapVersionIdOrderByDisplayOrderAsc(seatMapVersion.getId());
-
-        List<PhysicalSeat> allSeats = physicalSeatRepository
-                .findAllBySeatMapVersionIdOrderByRowLabelAscSeatNumberAsc(seatMapVersion.getId());
-
-        // Senior Pattern: 1-line stream grouping
-        Map<UUID, List<PhysicalSeatResponse>> seatsBySection = allSeats.stream()
-                .collect(Collectors.groupingBy(
-                        PhysicalSeat::getSectionId,
-                        Collectors.mapping(PhysicalSeatResponse::fromDomain, Collectors.toList())
-                ));
-
-        List<SeatSectionResponse> sectionResponses = sections.stream()
-                .map(sec -> SeatSectionResponse.fromDomain(
-                        sec,
-                        seatsBySection.getOrDefault(sec.getId(), Collections.emptyList())
-                ))
-                .toList();
-
-        return SeatMapResponse.fromDomain(seatMapVersion, sectionResponses);
+        SeatMapVersion saved = seatMapVersionRepository.save(seatMapVersion);
+        return seatMapAssembler.toResponse(saved);
     }
 }

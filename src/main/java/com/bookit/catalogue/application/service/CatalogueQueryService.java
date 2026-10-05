@@ -22,10 +22,9 @@ public class CatalogueQueryService {
     private final CinemaRepository cinemaRepository;
     private final ScreenRepository screenRepository;
     private final SeatMapVersionRepository seatMapVersionRepository;
-    private final SeatSectionRepository seatSectionRepository;
-    private final PhysicalSeatRepository physicalSeatRepository;
     private final MovieRepository movieRepository;
     private final MovieFormatRepository movieFormatRepository;
+    private final SeatMapAssembler seatMapAssembler;
 
     /**
      * Return all active cities, ordered alphabetically by name.
@@ -114,33 +113,6 @@ public class CatalogueQueryService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "No published seat map found for screen ID: " + screenId));
 
-        return buildSeatMapResponse(version);
-    }
-
-    /**
-     * Helper to group seats into sections and build SeatMapResponse.
-     */
-    private SeatMapResponse buildSeatMapResponse(SeatMapVersion version) {
-        List<SeatSection> sections = seatSectionRepository
-                .findAllBySeatMapVersionIdOrderByDisplayOrderAsc(version.getId());
-
-        List<PhysicalSeat> allSeats = physicalSeatRepository
-                .findAllBySeatMapVersionIdOrderByRowLabelAscSeatNumberAsc(version.getId());
-
-        // Senior Pattern: 1-line stream grouping
-        Map<UUID, List<PhysicalSeatResponse>> seatsBySection = allSeats.stream()
-                .collect(Collectors.groupingBy(
-                        PhysicalSeat::getSectionId,
-                        Collectors.mapping(PhysicalSeatResponse::fromDomain, Collectors.toList())
-                ));
-
-        List<SeatSectionResponse> sectionResponses = sections.stream()
-                .map(sec -> SeatSectionResponse.fromDomain(
-                        sec,
-                        seatsBySection.getOrDefault(sec.getId(), Collections.emptyList())
-                ))
-                .toList();
-
-        return SeatMapResponse.fromDomain(version, sectionResponses);
+        return seatMapAssembler.toResponse(version);
     }
 }
