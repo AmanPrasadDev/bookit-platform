@@ -41,7 +41,9 @@ public class SecurityConfig {
                 // 4. Configure route permissions (actuator & auth are permitAll, rest authenticated)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/actuator/health/**", "/actuator/info").permitAll()
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll() // 👈 Swagger docs
                         .requestMatchers("/api/v1/auth/**").permitAll()
+                        .requestMatchers("/api/v1/catalogue/**").permitAll() // 👈 Public Catalogue discovery
                         .anyRequest().authenticated()
                 )
 
