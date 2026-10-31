@@ -3,7 +3,7 @@
 > Built with Java 21, Spring Boot 4, PostgreSQL 16, Redis 7, Flyway, Testcontainers, and Docker Compose.
 
 [![CI](https://github.com/AmanPrasadDev/bookit-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/AmanPrasadDev/bookit-platform/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/Tests-117%20Automated%20Tests-blue.svg)](https://github.com/AmanPrasadDev/bookit-platform)
+[![Tests](https://img.shields.io/badge/Tests-135%20Automated%20Tests-blue.svg)](https://github.com/AmanPrasadDev/bookit-platform)
 [![Java](https://img.shields.io/badge/Java-21%20LTS-orange.svg)](https://openjdk.org/projects/jdk/21/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16%20(btree__gist)-336791.svg)](https://www.postgresql.org/)
 
@@ -34,7 +34,7 @@ flowchart TD
     subgraph Data ["Persistence & Test Verification Layer"]
         Postgres[("PostgreSQL 16 Engine<br/>• GiST Range Exclusion Constraints<br/>• Row-Level Locks<br/>• Materialized Inventory")]
         Flyway["Flyway Schema Evolution<br/>• Versioned Migrations (V1 – V4)"]
-        Testcontainers["Testcontainers Integration Suite<br/>• Real PostgreSQL 16 Containers<br/>• 117 Passing Automated Tests"]
+        Testcontainers["Testcontainers Integration Suite<br/>• Real PostgreSQL 16 Containers<br/>• 135 Passing Automated Tests"]
     end
 
     Client --> Security
@@ -100,9 +100,9 @@ During reservation spikes, multiple users frequently attempt to book adjacent se
 ## 🧪 Testing & Verification
 
 The test suite distinguishes in-memory unit tests from database-backed integration tests:
-* **117 passing automated tests** across 15 test classes:
-  * **Unit Tests:** Service and domain logic (e.g., `VenueManagementServiceTest`, `CatalogueQueryServiceTest`, `JwtServiceTest`) tested in-memory with JUnit 5 and Mockito.
-  * **Integration Tests:** Database constraints, Flyway migrations, and web layers (e.g., `ShowRepositoryIntegrationTest`, `CatalogueRepositoryIntegrationTest`, `OperatorVenueControllerIntegrationTest`, `SecurityIntegrationTest`) tested against real PostgreSQL 16 Docker containers using **Testcontainers**.
+* **135 passing automated tests** across 16 test classes:
+  * **Unit Tests:** Service and domain logic (e.g., `ShowManagementServiceTest`, `VenueManagementServiceTest`, `CatalogueQueryServiceTest`, `JwtServiceTest`) tested in-memory with JUnit 5 and Mockito.
+  * **Integration Tests:** Database constraints, Flyway migrations, and web layers (e.g., `ShowRepositoryIntegrationTest`, `CatalogueRepositoryIntegrationTest`, `OperatorShowControllerIntegrationTest`, `OperatorVenueControllerIntegrationTest`, `SecurityIntegrationTest`) tested against real PostgreSQL 16 Docker containers using **Testcontainers**.
 
 ### Running the Test Suite
 On Linux/macOS:
@@ -162,7 +162,7 @@ Access Swagger UI & Actuator:
 - [x] **Milestone 0 (Complete):** Project Skeleton, Docker Compose (PostgreSQL 16, Redis 7, Kafka KRaft), Maven Wrapper, CI Pipeline.
 - [x] **Milestone 1 (Complete):** Identity & Access Management (Google OIDC, Dual-Token JWT Rotation, RBAC Filters).
 - [x] **Milestone 2 (Complete):** Catalogue & Venue Domain (Auditorium screens, versioned immutable seat maps, public discovery APIs, operator venue management).
-- [x] **Milestone 3 (Core Schema & Repositories Verified):** Showtimes & Inventory Engine (Flyway V4, PostgreSQL GiST range exclusion constraints, pricing configurations, atomic materialized `show_seat` inventory, 8 repository integration tests).
+- [x] **Milestone 3 (Complete):** Showtimes & Inventory Engine (Flyway V4, PostgreSQL GiST range exclusion constraints, pricing configurations, atomic materialized `show_seat` inventory, `ShowManagementService`, `OperatorShowController`, and 52 dedicated tests across repository, service, and controller slices).
 - [ ] **Milestone 4 (In Progress):** High-Concurrency Seat Holds & Invariant Verification (Ordered `SELECT ... FOR UPDATE` locking, Redis distributed locks, 500-thread concurrent booking test).
 - [ ] **Milestone 5 (Planned):** Snapshot Quoting & Financial Accuracy Engine (`BigDecimal` Money VO, immutable quote snapshots).
 - [ ] **Milestone 6 (Planned):** Booking Orchestration & Payment Provider Adapters (Idempotent state machine, sandbox payment callback verification).

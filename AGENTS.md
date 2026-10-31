@@ -39,7 +39,7 @@
 ---
 
 ## 3. Architecture & Project Cheat Sheet
-* **Current Milestone:** **Milestone M3 — Show Management & Inventory** (M1, M2 done and merged to `main`; M3 schema V4, entities, repositories and repository tests done; `ShowManagementService`, show DTOs and service tests done; show controllers and controller integration tests still to be written by Aman; M4 holds/concurrency comes after).
+* **Current Milestone:** **Milestone M4 — High-Concurrency Seat Holds & Invariant Verification** (M1, M2, and M3 100% complete, verified with 135 passing tests, and merged to `main`).
 * **Repository Path:** `C:\Users\meama\projects\bookit-platform`
 * **Docs Path:** `c:\Users\meama\OneDrive\Documents\New project\docs`
 * **Docker Containers:** `bookit-postgres` (5432), `bookit-redis` (6379), `bookit-kafka` (9092).
