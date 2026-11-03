@@ -2,6 +2,12 @@ package com.bookit.show.infrastructure.repository;
 
 import com.bookit.catalogue.domain.*;
 import com.bookit.catalogue.infrastructure.repository.*;
+import com.bookit.hold.domain.SeatHold;
+import com.bookit.hold.domain.SeatHoldStatus;
+import com.bookit.hold.infrastructure.repository.SeatHoldRepository;
+import com.bookit.identity.domain.User;
+import com.bookit.identity.domain.UserStatus;
+import com.bookit.identity.infrastructure.repository.UserRepository;
 import com.bookit.show.domain.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -71,6 +77,12 @@ class ShowRepositoryIntegrationTest {
 
     @Autowired
     private MovieFormatRepository movieFormatRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private SeatHoldRepository seatHoldRepository;
 
     private Screen primaryScreen;
     private Screen secondaryScreen;
@@ -481,7 +493,22 @@ class ShowRepositoryIntegrationTest {
         assertThat(seatList).hasSize(2);
 
         // State Transition: AVAILABLE -> HELD
-        UUID holdId = UUID.randomUUID();
+        User customer = userRepository.save(User.builder()
+                .id(UUID.randomUUID())
+                .email("hold-customer-" + UUID.randomUUID() + "@bookit.com")
+                .fullName("Hold Customer")
+                .status(UserStatus.ACTIVE)
+                .build());
+
+        SeatHold hold = seatHoldRepository.save(SeatHold.builder()
+                .id(UUID.randomUUID())
+                .customerId(customer.getId())
+                .showId(show.getId())
+                .status(SeatHoldStatus.HELD)
+                .expiresAt(Instant.now().plus(10, ChronoUnit.MINUTES))
+                .build());
+
+        UUID holdId = hold.getId();
         ShowSeat seatToHold = seat1Opt.get();
         seatToHold.hold(holdId);
         showSeatRepository.saveAndFlush(seatToHold);
