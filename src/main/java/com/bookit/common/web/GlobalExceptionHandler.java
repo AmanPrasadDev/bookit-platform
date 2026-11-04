@@ -3,6 +3,7 @@ package com.bookit.common.web;
 import com.bookit.catalogue.domain.exception.DuplicateEntityException;
 import com.bookit.catalogue.domain.exception.ResourceNotFoundException;
 import com.bookit.catalogue.domain.exception.SeatMapImmutableException;
+import com.bookit.hold.domain.exception.SeatUnavailableException;
 import com.bookit.show.domain.exception.ScheduleConflictException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,6 +50,14 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
                 .body(ApiErrorResponse.of("SCHEDULE_CONFLICT", ex.getMessage(), HttpStatus.CONFLICT.value()));
+    }
+
+    @ExceptionHandler(SeatUnavailableException.class)
+    public ResponseEntity<ApiErrorResponse> handleSeatUnavailableException(SeatUnavailableException ex) {
+        log.warn("Seat unavailable: {}", ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(ApiErrorResponse.of("SEAT_UNAVAILABLE", ex.getMessage(), HttpStatus.CONFLICT.value()));
     }
 
     @ExceptionHandler(IllegalStateException.class)
