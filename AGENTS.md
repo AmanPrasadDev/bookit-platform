@@ -39,7 +39,7 @@
 ---
 
 ## 3. Architecture & Project Cheat Sheet
-* **Current Milestone:** **Milestone M4 — High-Concurrency Seat Holds & Invariant Verification** (M1, M2, and M3 100% complete, verified with 135 passing tests, and merged to `main`).
+* **Current Milestone:** **Milestone M4 Complete — 205 Passing Tests** (Milestones M1–M4 100% complete; Ready for Milestone M5: Snapshot Quoting & Financial Accuracy Engine).
 * **Repository Path:** `C:\Users\meama\projects\bookit-platform`
 * **Docs Path:** `c:\Users\meama\OneDrive\Documents\New project\docs`
 * **Docker Containers:** `bookit-postgres` (5432), `bookit-redis` (6379), `bookit-kafka` (9092).

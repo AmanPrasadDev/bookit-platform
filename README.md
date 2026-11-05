@@ -3,7 +3,7 @@
 > Built with Java 21, Spring Boot 4, PostgreSQL 16, Redis 7, Flyway, Testcontainers, and Docker Compose.
 
 [![CI](https://github.com/AmanPrasadDev/bookit-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/AmanPrasadDev/bookit-platform/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/Tests-135%20Automated%20Tests-blue.svg)](https://github.com/AmanPrasadDev/bookit-platform)
+[![Tests](https://img.shields.io/badge/Tests-205%20Automated%20Tests-blue.svg)](https://github.com/AmanPrasadDev/bookit-platform)
 [![Java](https://img.shields.io/badge/Java-21%20LTS-orange.svg)](https://openjdk.org/projects/jdk/21/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16%20(btree__gist)-336791.svg)](https://www.postgresql.org/)
 
@@ -100,7 +100,7 @@ During reservation spikes, multiple users frequently attempt to book adjacent se
 ## 🧪 Testing & Verification
 
 The test suite distinguishes in-memory unit tests from database-backed integration tests:
-* **135 passing automated tests** across 16 test classes:
+* **205 passing automated tests** across 19 test classes:
   * **Unit Tests:** Service and domain logic (e.g., `ShowManagementServiceTest`, `VenueManagementServiceTest`, `CatalogueQueryServiceTest`, `JwtServiceTest`) tested in-memory with JUnit 5 and Mockito.
   * **Integration Tests:** Database constraints, Flyway migrations, and web layers (e.g., `ShowRepositoryIntegrationTest`, `CatalogueRepositoryIntegrationTest`, `OperatorShowControllerIntegrationTest`, `OperatorVenueControllerIntegrationTest`, `SecurityIntegrationTest`) tested against real PostgreSQL 16 Docker containers using **Testcontainers**.
 
@@ -163,7 +163,7 @@ Access Swagger UI & Actuator:
 - [x] **Milestone 1 (Complete):** Identity & Access Management (Google OIDC, Dual-Token JWT Rotation, RBAC Filters).
 - [x] **Milestone 2 (Complete):** Catalogue & Venue Domain (Auditorium screens, versioned immutable seat maps, public discovery APIs, operator venue management).
 - [x] **Milestone 3 (Complete):** Showtimes & Inventory Engine (Flyway V4, PostgreSQL GiST range exclusion constraints, pricing configurations, atomic materialized `show_seat` inventory, `ShowManagementService`, `OperatorShowController`, and 52 dedicated tests across repository, service, and controller slices).
-- [ ] **Milestone 4 (In Progress):** High-Concurrency Seat Holds & Invariant Verification (Ordered `SELECT ... FOR UPDATE` locking, Redis distributed locks, 500-thread concurrent booking test).
+- [x] **Milestone 4 (Complete):** High-Concurrency Seat Holds & Invariant Verification (Flyway V5 schema, 3-layer concurrency defense pipeline: Redis distributed locking with Lua scripts and rollback, deterministic sort deadlock elimination, PostgreSQL pessimistic row locks `SELECT ... FOR UPDATE`, `SeatHoldService`, `SeatHoldController`, and 100-thread concurrent stress testing with 205 automated tests).
 - [ ] **Milestone 5 (Planned):** Snapshot Quoting & Financial Accuracy Engine (`BigDecimal` Money VO, immutable quote snapshots).
 - [ ] **Milestone 6 (Planned):** Booking Orchestration & Payment Provider Adapters (Idempotent state machine, sandbox payment callback verification).
 - [ ] **Milestone 7 (Planned):** QR Ticket Issuance & Cryptographic Scan Validation.
